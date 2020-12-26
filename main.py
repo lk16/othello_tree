@@ -226,19 +226,25 @@ class Board:
         raise ValueError('Invalid color {}'.format(color))
 
 
-def main():
-
-    board = Board()
+def generate_tree(dot, board, depth):
+    board_name = board.get_image_file_name()
     board_name = board.write_image()
-
-    dot = Digraph(format='png')
     dot.node(board_name, label="", shape="plaintext", image=board_name)
+
+    if depth == 0:
+        return
 
     for child in board.get_children():
         child_name = child.write_image()
         dot.node(child_name, label="", shape="plaintext", image=child_name)
         dot.edge(board_name, child_name)
+        generate_tree(dot, child, depth-1)
 
+
+def main():
+    dot = Digraph(format='png')
+    board = Board()
+    generate_tree(dot, board, 3)
     dot.render('graph')
 
 
