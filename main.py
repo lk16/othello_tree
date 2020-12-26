@@ -2,13 +2,12 @@ from graphviz import Digraph
 from dataclasses import dataclass
 from typing import List
 from PIL import Image, ImageDraw
+import json
 
 BLACK = 0
 WHITE = 1
 
 MOVE_PASS = -1
-
-
 
 
 @dataclass
@@ -41,7 +40,7 @@ class Board:
     def write_image(self):
         filename = self.get_image_file_name()
 
-        image_size = 200
+        image_size = 100
         cell_size = image_size / 8
         disc_radius = 0.42 * cell_size
         color_black = (0, 0, 0)
@@ -88,7 +87,7 @@ class Board:
                     outline=color_black
                 )
 
-        im.save(filename, quality=95)
+        im.save(filename, quality=100)
         return filename
 
     @classmethod
@@ -226,26 +225,28 @@ class Board:
         raise ValueError('Invalid color {}'.format(color))
 
 
-def generate_tree(dot, board, depth):
+def generate_tree(dot, board, node):
     board_name = board.get_image_file_name()
     board_name = board.write_image()
     dot.node(board_name, label="", shape="plaintext", image=board_name)
 
-    if depth == 0:
-        return
-
-    for child in board.get_children():
+    for move, subtree in node.items():
+        child = board.do_move(Board.field_to_index(move))
         child_name = child.write_image()
         dot.node(child_name, label="", shape="plaintext", image=child_name)
         dot.edge(board_name, child_name)
-        generate_tree(dot, child, depth-1)
+        generate_tree(dot, child, subtree)
 
 
 def main():
     dot = Digraph(format='png')
     board = Board()
-    generate_tree(dot, board, 3)
-    dot.render('graph')
+
+    with open("white.json", 'r') as json_file:
+        tree_root = json.load(json_file)
+
+    generate_tree(dot, board, tree_root)
+    dot.render('white')
 
 
 if __name__ == '__main__':
