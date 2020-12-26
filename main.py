@@ -1,12 +1,14 @@
 from graphviz import Digraph
-import svgwrite
 from dataclasses import dataclass
 from typing import List
+from PIL import Image, ImageDraw
 
 BLACK = 0
 WHITE = 1
 
 MOVE_PASS = -1
+
+
 
 
 @dataclass
@@ -29,33 +31,64 @@ class Board:
         if self.turn == WHITE:
             return self.me
         return self.opp
-    def get_svg_file_name(self):
-        return "{0:0{1}x}{2:0{3}x}.svg".format(self.black(), 16, self.white(), 16)
 
-    def write_svg(self):
-        filename = self.get_svg_file_name()
-        dwg = svgwrite.Drawing(filename)
+    def get_image_file_name(self):
+        return "jpg/{0:0{1}x}{2:0{3}x}.jpg".format(
+            self.black(), 16,
+            self.white(), 16,
+        )
 
-        image_size = 400
+    def write_image(self):
+        filename = self.get_image_file_name()
+
+        image_size = 200
         cell_size = image_size / 8
-        disc_radius = 0.42 *cell_size
+        disc_radius = 0.42 * cell_size
+        color_black = (0, 0, 0)
+        color_white = (255, 255, 255)
 
-        dwg.add(dwg.rect((0, 0), (image_size, image_size), fill='green'))
+        im = Image.new('RGB', (image_size, image_size), (0, 192, 0))
+        draw = ImageDraw.Draw(im)
 
         for i in range(1, 8):
-            dwg.add(svgwrite.shapes.Line(start=(cell_size*i, 0), end=(cell_size*i, image_size), stroke='black'))
-            dwg.add(svgwrite.shapes.Line(start=(0, cell_size*i), end=(image_size, cell_size*i), stroke='black'))
+            draw.line(
+                (cell_size*i, 0, cell_size*i, image_size),
+                fill=color_black,
+                width=1
+            )
+            draw.line(
+                (0, cell_size*i, image_size, cell_size*i),
+                fill=color_black,
+                width=1
+            )
 
         for b in range(64):
             bit = 1 << b
             circle_x = (cell_size/2) + cell_size*(b % 8)
             circle_y = (cell_size/2) + cell_size*(b // 8)
-            if self.white() & bit:
-                dwg.add(dwg.circle(center=(circle_x, circle_y), r=disc_radius, fill='white'))
-            if self.black() & bit:
-                dwg.add(dwg.circle(center=(circle_x, circle_y), r=disc_radius, fill='black'))
-        dwg.save()
 
+            circle_coords = (
+                circle_x-disc_radius,
+                circle_y-disc_radius,
+                circle_x+disc_radius,
+                circle_y+disc_radius
+            )
+
+            if self.white() & bit:
+                draw.ellipse(
+                    circle_coords,
+                    fill=color_white,
+                    outline=color_white
+                )
+
+            if self.black() & bit:
+                draw.ellipse(
+                    circle_coords,
+                    fill=color_black,
+                    outline=color_black
+                )
+
+        im.save(filename, quality=95)
         return filename
 
     @classmethod
@@ -193,19 +226,21 @@ class Board:
         raise ValueError('Invalid color {}'.format(color))
 
 
-
 def main():
 
-    Board().write_svg()
-
-    return
+    board = Board()
+    board_name = board.write_image()
 
     dot = Digraph(format='png')
+    dot.node(board_name, label="", shape="plaintext", image=board_name)
 
-    dot.node('a', shape='plaintext', image='foo.jpeg')
-    dot.node('b', shape='plaintext', image='bar.jpeg')
-    dot.edge('a', 'b')
+    for child in board.get_children():
+        child_name = child.write_image()
+        dot.node(child_name, label="", shape="plaintext", image=child_name)
+        dot.edge(board_name, child_name)
+
     dot.render('graph')
+
 
 if __name__ == '__main__':
     main()
