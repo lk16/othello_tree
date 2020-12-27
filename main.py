@@ -102,6 +102,15 @@ class Board:
             raise ValueError("invalid field: {}".format(field))
         return 8*y + x
 
+    @classmethod
+    def index_to_field(cls, index: int) -> str:
+        if index not in range(64):
+            raise ValueError("field index out of bounds")
+        field = ''
+        field += 'abcdefgh'[index % 8]
+        field += '12345678'[index // 8]
+        return field
+
     def show(self) -> str:
         moves = self.get_moves()
         print('+-a-b-c-d-e-f-g-h-+')
@@ -129,7 +138,8 @@ class Board:
             return child
 
         if (self.me | self.opp) & (1 << move):
-            raise ValueError('invalid move: {}'.format(move))
+            raise ValueError('invalid move: {} ({})'.format(
+                move, Board.index_to_field(move)))
 
         flipped = 0
         for dx, dy in [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]:
@@ -225,17 +235,33 @@ class Board:
         raise ValueError('Invalid color {}'.format(color))
 
 
-def generate_tree(dot, board, node):
+def generate_tree(dot, board, node, move_sequence=""):
     board_name = board.get_image_file_name()
     board_name = board.write_image()
     dot.node(board_name, label="", shape="plaintext", image=board_name)
+
+    if type(node) is str:
+
+        if node == "transposition":
+            return
+
+        child_name = board_name + node
+        dot.node(child_name, node)
+        dot.edge(board_name, child_name)
+        return
 
     for move, subtree in node.items():
         child = board.do_move(Board.field_to_index(move))
         child_name = child.write_image()
         dot.node(child_name, label="", shape="plaintext", image=child_name)
         dot.edge(board_name, child_name)
-        generate_tree(dot, child, subtree)
+
+        move_sequence_prefix = move_sequence + ' ' + move
+        try:
+            generate_tree(dot, child, subtree, move_sequence + ' ' + move)
+        except ValueError as e:
+            print(f'at {move_sequence_prefix}: {e}')
+            exit(1)
 
 
 def main():
