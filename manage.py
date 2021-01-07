@@ -141,16 +141,8 @@ class Board:
             )
 
         flipped = 0
-        for dx, dy in [
-            (-1, -1),
-            (-1, 0),
-            (-1, 1),
-            (0, -1),
-            (0, 1),
-            (1, -1),
-            (1, 0),
-            (1, 1),
-        ]:
+        for dx, dy in [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1),
+                       (1, 0), (1, 1)]:
             s = 1
             while True:
                 curx = int(move % 8) + (dx * s)
@@ -338,5 +330,11 @@ def download_playok_games(username: str) -> None:
     print(f"Downloaded {downloaded_files} files.")
 
 
-if __name__ == "__main__":
+@cli.command()
+def training():
+    from training.app import app
+    app.run(host='0.0.0.0', port=5000, debug=True)
+
+
+if __name__ == '__main__':
     cli()

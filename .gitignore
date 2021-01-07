@@ -4,3 +4,4 @@ venv/
 *.png
 jpg/*
 *.pgn
+__pycache__/
