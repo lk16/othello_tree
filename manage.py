@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+
+import click
 from graphviz import Digraph
 from dataclasses import dataclass
 from typing import List
@@ -264,7 +267,13 @@ def generate_tree(dot, board, node, move_sequence=""):
             exit(1)
 
 
-def main():
+@click.group()
+def cli():
+    pass
+
+
+@cli.command()
+def update_tree():
     dot = Digraph(format='png')
     board = Board()
 
@@ -272,8 +281,8 @@ def main():
         tree_root = json.load(json_file)
 
     generate_tree(dot, board, tree_root)
-    dot.render('white')
+    dot.render('white', cleanup=True)
 
 
 if __name__ == '__main__':
-    main()
+    cli()
