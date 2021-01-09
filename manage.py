@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+import os
+import re
+from bs4 import BeautifulSoup
+import requests
 import click
 from graphviz import Digraph
 from dataclasses import dataclass
@@ -282,6 +286,43 @@ def update_tree():
 
     generate_tree(dot, board, tree_root)
     dot.render('white', cleanup=True)
+
+
+PGN_FOLDER = './pgn'
+
+
+@cli.command()
+@click.argument('username', type=str)
+def download_playok_games(username):
+    response = requests.get(f'https://www.playok.com/en/stat.phtml?u={username}&g=rv&sk=2')
+    response.raise_for_status()
+
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    downloaded_files = 0
+
+    for trs in soup.find_all('tr')[1:]:
+        tds = trs.findChildren('td')
+        date = tds[0].text.strip().split(' ')[0]
+        link = tds[-1].find("a", recursive=True)['href']
+
+        game_id = re.search('[0-9]+', link).group(0)
+        filename = os.path.join(PGN_FOLDER, date, game_id + '.pgn')
+
+        os.makedirs(os.path.join(PGN_FOLDER, date), exist_ok=True)
+
+        if os.path.exists(filename):
+            continue
+
+        game_response = requests.get(f'https://www.playok.com{link}')
+        game_response.raise_for_status()
+
+        with open(filename, 'w') as game_file:
+            game_file.write(game_response.text)
+
+        downloaded_files += 1
+
+    print(f'Downloaded {downloaded_files} files.')
 
 
 if __name__ == '__main__':
