@@ -50,6 +50,21 @@ class Board:
             self.white(), 16,
         )
 
+    def json(self) -> dict:
+        result = {
+            "turn": self.turn,
+            "black": [],
+            "white": [],
+        }
+
+        for i in range(64):
+            if self.black() & (1 << i):
+                result['black'].append(i)
+            if self.white() & (1 << i):
+                result['white'].append(i)
+
+        return result
+
     def write_image(self):
         filename = self.get_image_file_name()
 

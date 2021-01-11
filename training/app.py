@@ -117,3 +117,27 @@ def board_image():
     response = make_response(body)
     response.content_type = 'image/svg+xml'
     return response
+
+
+@app.route('/move')
+def do_move():
+    blacks = get_disc_offsets(request.args.get('black', ''))
+    whites = get_disc_offsets(request.args.get('white', ''))
+
+    turn = request.args.get('turn', 'black')
+    if turn not in ['0', '1']:
+        turn = '0'
+    turn = int(turn)
+
+    board = Board.from_indexes(blacks, whites, turn)
+
+    move = request.args.get("move")
+    try:
+        move = int(move)
+    except (ValueError, TypeError):
+        return make_response("bad move formatting", 400)
+
+    if board.get_moves() & (1 << move) == 0:
+        return make_response("invalid move", 400)
+
+    return jsonify(board.do_move(move).json())

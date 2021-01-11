@@ -13,6 +13,6 @@ Small web training app for openings
     - [ ] endpoint for board
         - [x] basic functionality
         - [ ] nicer discs
-    - [ ] endpoint for doing a move
+    - [x] endpoint for doing a move
 - [ ] implement frontend
     - [ ] JS mess
