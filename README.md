@@ -11,6 +11,8 @@ Small web training app for openings
 ##### TODO Training
 - [ ] training backend
     - [ ] endpoint for board
+        - [x] basic functionality
+        - [ ] nicer discs
     - [ ] endpoint for doing a move
 - [ ] implement frontend
     - [ ] JS mess
