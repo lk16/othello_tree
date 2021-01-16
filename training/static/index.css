@@ -1,0 +1,34 @@
+.buttons {
+    height: 30px;
+    text-align: center;
+    vertical-align: center;
+    display: inline-block;
+}
+
+.buttons select {
+    height: 100%;
+    border: 0;
+}
+
+.form-wrapper {
+	margin: 10px auto;
+	overflow: hidden;
+}
+
+.board-wrapper {
+	display: table;
+	margin: 0 auto;
+	visibility: visible;
+}
+
+.content {
+    text-align: center;
+}
+
+.buttons button {
+    height: 100%;
+}
+
+body {
+    background-color: #333333;
+}

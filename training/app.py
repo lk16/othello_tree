@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, render_template, make_response, request
 import json
-from othello.board import Board, MOVE_PASS, BLACK
+from othello.board import Board
 from typing import List
 
 app = Flask(__name__)
@@ -43,6 +43,7 @@ def openings():
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 def get_disc_offsets(args: str) -> List[int]:
     """
