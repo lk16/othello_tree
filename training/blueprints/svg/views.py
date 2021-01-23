@@ -1,27 +1,22 @@
-from flask import Blueprint, Response, make_response, request
+from flask import Blueprint, Response, make_response
 
-from othello.board import Board
-from training.blueprints.api.views import get_disc_offsets
+from othello.board import BLACK, EMPTY, VALID_MOVE, WHITE, Board
 
 svg = Blueprint("svg", __name__)
 
 
-@svg.route("/svg/board")
-def board_image() -> Response:
-    blacks = get_disc_offsets(request.args.get("black", ""))
-    whites = get_disc_offsets(request.args.get("white", ""))
-    wrongs = get_disc_offsets(request.args.get("wrong", ""))
-
-    turn = request.args.get("turn", "black")
-    if turn not in ["0", "1"]:
-        turn = "0"
-    turn = int(turn)
+@svg.route("/board/<board_id>")
+def board_image(board_id: str) -> Response:
+    try:
+        board = Board.from_id(board_id)
+    except ValueError:
+        return make_response("Invalid board", 400)
 
     image_size = 800
     cell_size = image_size / 8
     disc_radius = 0.38 * cell_size
     move_radius = 0.08 * cell_size
-    cross_width = 0.3 * cell_size
+    # cross_width = 0.3 * cell_size TODO
 
     body = f"""<?xml version="1.0"?>
     <svg width="{image_size}" height="{image_size}" xmlns="http://www.w3.org/2000/svg"
@@ -37,34 +32,38 @@ def board_image() -> Response:
         body += f"""<line x1="0" y1="{offset}" x2="{image_size}" y2="{offset}"
         style="stroke:black; stroke-width:2" />\n"""
 
-    for (color, indexes) in [("black", blacks), ("white", whites)]:
-        for index in indexes:
-            circle_x = (cell_size / 2) + cell_size * (index % 8)
-            circle_y = (cell_size / 2) + cell_size * (index // 8)
+    for index, field in enumerate(board.get_fields()):
+        circle_x = (cell_size / 2) + cell_size * (index % 8)
+        circle_y = (cell_size / 2) + cell_size * (index // 8)
+
+        move_color = {BLACK: "black", WHITE: "white"}[board.turn]
+
+        if field == VALID_MOVE:
             body += f"""<circle cx="{circle_x}" cy="{circle_y}"
-            r="{disc_radius}" fill="{color}" />\n"""
+            r="{move_radius}" fill="{move_color}" />\n"""
+            continue
 
-    for index in wrongs:
-        cross_min_x = (cell_size / 2) + cell_size * (index % 8) - (cross_width / 2)
-        cross_min_y = (cell_size / 2) + cell_size * (index // 8) - (cross_width / 2)
-        cross_max_x = cross_min_x + cross_width
-        cross_max_y = cross_min_y + cross_width
+        if field == EMPTY:
+            continue
 
-        body += f"""<line x1="{cross_min_x}" y1="{cross_min_y}"
-        x2="{cross_max_x}" y2="{cross_max_y}" style="stroke:red;
-        stroke-width:7" />\n
-        <line x1="{cross_max_x}" y1="{cross_min_y}"
-        x2="{cross_min_x}" y2="{cross_max_y}" style="stroke:red;
-        stroke-width:7" />\n"""
+        fill_color = {BLACK: "black", WHITE: "white"}[field]
 
-    board = Board.from_indexes(blacks, whites, turn)
-    moves_bitset = board.get_moves()
-    for index in range(64):
-        if moves_bitset & (1 << index):
-            circle_x = (cell_size / 2) + cell_size * (index % 8)
-            circle_y = (cell_size / 2) + cell_size * (index // 8)
-            body += f"""<circle cx="{circle_x}" cy="{circle_y}"
-            r="{move_radius}" fill="{turn}" />\n"""
+        body += f"""<circle cx="{circle_x}" cy="{circle_y}"
+        r="{disc_radius}" fill="{fill_color}" />\n"""
+
+    # TODO
+    # for index in wrongs:
+    #     cross_min_x = (cell_size / 2) + cell_size * (index % 8) - (cross_width / 2)
+    #     cross_min_y = (cell_size / 2) + cell_size * (index // 8) - (cross_width / 2)
+    #     cross_max_x = cross_min_x + cross_width
+    #     cross_max_y = cross_min_y + cross_width
+    #
+    #     body += f"""<line x1="{cross_min_x}" y1="{cross_min_y}"
+    #     x2="{cross_max_x}" y2="{cross_max_y}" style="stroke:red;
+    #     stroke-width:7" />\n
+    #     <line x1="{cross_max_x}" y1="{cross_min_y}"
+    #     x2="{cross_min_x}" y2="{cross_max_y}" style="stroke:red;
+    #     stroke-width:7" />\n"""
 
     body += "</svg>"
 

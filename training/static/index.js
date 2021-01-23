@@ -1,6 +1,6 @@
 $(document).ready(function (e) {
 
-    $("#board").attr('src', 'svg/board?white=27,36&black=28,35');
+    $("#board").attr('src', 'svg/board/initial');
 
     $('#board').click(function (e) {
         var posX = e.pageX - $(this).offset().left;

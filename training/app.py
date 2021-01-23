@@ -4,8 +4,8 @@ from training.blueprints.api.views import api
 from training.blueprints.svg.views import svg
 
 app = Flask(__name__)
-app.register_blueprint(svg)
-app.register_blueprint(api)
+app.register_blueprint(svg, url_prefix="/svg")
+app.register_blueprint(api, url_prefix="/api")
 
 
 @app.route("/")

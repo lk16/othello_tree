@@ -7,6 +7,8 @@ from PIL import Image, ImageDraw
 
 BLACK = 0
 WHITE = 1
+EMPTY = 2
+VALID_MOVE = 3
 
 MOVE_PASS = -1
 
@@ -23,15 +25,33 @@ class Board:
         self.turn = BLACK
 
     @classmethod
-    def from_indexes(cls, blacks: List[int], whites: List[int], turn: int) -> "Board":
+    def from_id(cls, api_str: str) -> "Board":
         board = Board()
-        board.me = 0
-        board.opp = 0
-        for index in blacks:
-            board.me |= 1 << index
-        for index in whites:
-            board.opp |= 1 << index
-        if turn == 1:
+
+        if api_str == "initial":
+            return Board()
+
+        if api_str == "xot":
+            raise NotImplementedError
+
+        if len(api_str) != 33:
+            raise ValueError("unexpected length")
+
+        if api_str[0] not in "BW":
+            raise ValueError("unexpected turn value")
+
+        try:
+            blacks = int(api_str[1:17], 16)
+            whites = int(api_str[17:33], 16)
+        except ValueError as e:
+            raise ValueError("unexpected base 16 char in discs") from e
+
+        turn = {"B": BLACK, "W": WHITE}[api_str[0]]
+
+        board.me = blacks
+        board.opp = whites
+
+        if turn == WHITE:
             board = board.do_move(MOVE_PASS)
         return board
 
@@ -53,22 +73,32 @@ class Board:
             16,
         )
 
-    def json(self) -> dict:
+    def get_fields(self) -> List[int]:
+        moves = self.get_moves()
+        fields: List[int] = []
 
-        blacks = []
-        whites = []
+        for index in range(64):
+            mask = 1 << index
 
-        for i in range(64):
-            if self.black() & (1 << i):
-                blacks.append(i)
-            if self.white() & (1 << i):
-                whites.append(i)
+            if self.black() & mask:
+                fields.append(BLACK)
+                continue
 
-        return {
-            "turn": self.turn,
-            "black": blacks,
-            "white": whites,
-        }
+            if self.white() & mask:
+                fields.append(WHITE)
+                continue
+
+            if moves & mask:
+                fields.append(VALID_MOVE)
+                continue
+
+            fields.append(EMPTY)
+
+        return fields
+
+    def to_id(self) -> str:
+        turn = {BLACK: "B", WHITE: "W"}[self.turn]
+        return turn + "{:016x}{:016x}".format(self.black(), self.white())
 
     def write_image(self) -> str:
         filename = self.get_image_file_name()
