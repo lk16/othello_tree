@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from typing import List
+
 from PIL import Image, ImageDraw
 
 BLACK = 0
@@ -16,13 +17,13 @@ class Board:
     opp: int
     turn: int
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.me = 1 << 28 | 1 << 35
         self.opp = 1 << 27 | 1 << 36
         self.turn = BLACK
 
     @classmethod
-    def from_indexes(cls, blacks: List[int], whites: List[int], turn: int) -> 'Board':
+    def from_indexes(cls, blacks: List[int], whites: List[int], turn: int) -> "Board":
         board = Board()
         board.me = 0
         board.opp = 0
@@ -44,28 +45,32 @@ class Board:
             return self.me
         return self.opp
 
-    def get_image_file_name(self):
+    def get_image_file_name(self) -> str:
         return "jpg/{0:0{1}x}{2:0{3}x}.jpg".format(
-            self.black(), 16,
-            self.white(), 16,
+            self.black(),
+            16,
+            self.white(),
+            16,
         )
 
     def json(self) -> dict:
-        result = {
-            "turn": self.turn,
-            "black": [],
-            "white": [],
-        }
+
+        blacks = []
+        whites = []
 
         for i in range(64):
             if self.black() & (1 << i):
-                result['black'].append(i)
+                blacks.append(i)
             if self.white() & (1 << i):
-                result['white'].append(i)
+                whites.append(i)
 
-        return result
+        return {
+            "turn": self.turn,
+            "black": blacks,
+            "white": whites,
+        }
 
-    def write_image(self):
+    def write_image(self) -> str:
         filename = self.get_image_file_name()
 
         image_size = 100
@@ -74,46 +79,34 @@ class Board:
         color_black = (0, 0, 0)
         color_white = (255, 255, 255)
 
-        im = Image.new('RGB', (image_size, image_size), (0, 192, 0))
+        im = Image.new("RGB", (image_size, image_size), (0, 192, 0))
         draw = ImageDraw.Draw(im)
 
         for i in range(1, 8):
             draw.line(
-                (cell_size*i, 0, cell_size*i, image_size),
-                fill=color_black,
-                width=1
+                (cell_size * i, 0, cell_size * i, image_size), fill=color_black, width=1
             )
             draw.line(
-                (0, cell_size*i, image_size, cell_size*i),
-                fill=color_black,
-                width=1
+                (0, cell_size * i, image_size, cell_size * i), fill=color_black, width=1
             )
 
         for b in range(64):
             bit = 1 << b
-            circle_x = (cell_size/2) + cell_size*(b % 8)
-            circle_y = (cell_size/2) + cell_size*(b // 8)
+            circle_x = (cell_size / 2) + cell_size * (b % 8)
+            circle_y = (cell_size / 2) + cell_size * (b // 8)
 
             circle_coords = (
-                circle_x-disc_radius,
-                circle_y-disc_radius,
-                circle_x+disc_radius,
-                circle_y+disc_radius
+                circle_x - disc_radius,
+                circle_y - disc_radius,
+                circle_x + disc_radius,
+                circle_y + disc_radius,
             )
 
             if self.white() & bit:
-                draw.ellipse(
-                    circle_coords,
-                    fill=color_white,
-                    outline=color_white
-                )
+                draw.ellipse(circle_coords, fill=color_white, outline=color_white)
 
             if self.black() & bit:
-                draw.ellipse(
-                    circle_coords,
-                    fill=color_black,
-                    outline=color_black
-                )
+                draw.ellipse(circle_coords, fill=color_black, outline=color_black)
 
         im.save(filename, quality=100)
         return filename
@@ -122,42 +115,42 @@ class Board:
     def field_to_index(cls, field: str) -> int:
         if len(field) != 2:
             raise ValueError("field too long")
-        if field == '--':
+        if field == "--":
             return MOVE_PASS
-        x = ord(field[0]) - ord('a')
-        y = ord(field[1]) - ord('1')
+        x = ord(field[0]) - ord("a")
+        y = ord(field[1]) - ord("1")
         if x not in range(8) or y not in range(8):
             raise ValueError("invalid field: {}".format(field))
-        return 8*y + x
+        return 8 * y + x
 
     @classmethod
     def index_to_field(cls, index: int) -> str:
         if index not in range(64):
             raise ValueError("field index out of bounds")
-        field = ''
-        field += 'abcdefgh'[index % 8]
-        field += '12345678'[index // 8]
+        field = ""
+        field += "abcdefgh"[index % 8]
+        field += "12345678"[index // 8]
         return field
 
-    def show(self) -> str:
+    def show(self) -> None:
         moves = self.get_moves()
-        print('+-a-b-c-d-e-f-g-h-+')
+        print("+-a-b-c-d-e-f-g-h-+")
         for y in range(8):
-            print('{} '.format(y+1), end='')
+            print("{} ".format(y + 1), end="")
             for x in range(8):
-                mask = 1 << ((y*8) + x)
+                mask = 1 << ((y * 8) + x)
                 if self.black() & mask:
-                    print('○ ', end='')
+                    print("○ ", end="")
                 elif self.white() & mask:
-                    print('● ', end='')
+                    print("● ", end="")
                 elif moves & mask:
-                    print('· ', end='')
+                    print("· ", end="")
                 else:
-                    print('  ', end='')
-            print('|')
-        print('+-----------------+')
+                    print("  ", end="")
+            print("|")
+        print("+-----------------+")
 
-    def do_move(self, move: int) -> 'Board':
+    def do_move(self, move: int) -> "Board":
         if move == MOVE_PASS:
             child = Board()
             child.opp = self.me
@@ -166,12 +159,21 @@ class Board:
             return child
 
         if (self.me | self.opp) & (1 << move):
-            raise ValueError('invalid move: {} ({})'.format(
-                move, Board.index_to_field(move)))
+            raise ValueError(
+                "invalid move: {} ({})".format(move, Board.index_to_field(move))
+            )
 
         flipped = 0
-        for dx, dy in [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1),
-                       (1, 0), (1, 1)]:
+        for dx, dy in [
+            (-1, -1),
+            (-1, 0),
+            (-1, 1),
+            (0, -1),
+            (0, 1),
+            (1, -1),
+            (1, 0),
+            (1, 1),
+        ]:
             s = 1
             while True:
                 curx = int(move % 8) + (dx * s)
@@ -179,14 +181,14 @@ class Board:
                 if curx < 0 or curx >= 8 or cury < 0 or cury >= 8:
                     break
 
-                cur = 8*cury + curx
+                cur = 8 * cury + curx
                 if self.opp & (1 << cur):
                     s += 1
                 else:
                     if (self.me & (1 << cur)) and (s >= 2):
                         for p in range(1, s):
-                            f = move + (p*(8*dy+dx))
-                            flipped |= (1 << f)
+                            f = move + (p * (8 * dy + dx))
+                            flipped |= 1 << f
                     break
 
         child = Board()
@@ -248,7 +250,7 @@ class Board:
 
         return movesSet & ~(self.me | self.opp) & 0xFFFFFFFFFFFFFFFF
 
-    def get_children(self) -> List['Board']:
+    def get_children(self) -> List["Board"]:
         children = []
         moves = self.get_moves()
         for i in range(64):
@@ -258,7 +260,7 @@ class Board:
 
     def count(self, color: int) -> int:
         if color == WHITE:
-            return bin(self.white()).count('1')
+            return bin(self.white()).count("1")
         elif color == BLACK:
-            return bin(self.black()).count('1')
-        raise ValueError('Invalid color {}'.format(color))
+            return bin(self.black()).count("1")
+        raise ValueError("Invalid color {}".format(color))

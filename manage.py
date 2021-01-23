@@ -3,17 +3,17 @@
 import json
 import os
 import re
-from dataclasses import dataclass
-from typing import Dict, List, Union
+from typing import Dict, Union
+
 import click
 import requests
 from bs4 import BeautifulSoup
 from graphviz import Digraph
+
 from othello.board import Board
-import json
 
+PGN_FOLDER: str = "./pgn"
 
-PGN_FOLDER: str = './pgn'
 
 def generate_tree(
     dot: Digraph,
@@ -108,10 +108,11 @@ def download_playok_games(username: str) -> None:
 
 
 @cli.command()
-def training():
+def training() -> None:
     from training.app import app
-    app.run(host='0.0.0.0', port=5000, debug=True)
+
+    app.run(host="0.0.0.0", port=5000, debug=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cli()
