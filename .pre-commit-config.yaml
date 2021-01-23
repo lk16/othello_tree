@@ -23,3 +23,8 @@ repos:
     rev: 20.8b1
     hooks:
     -   id: black
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: 'master'
+    hooks:
+    -   id: mypy
+        args: [--strict, --allow-any-generics, --ignore-missing-imports]

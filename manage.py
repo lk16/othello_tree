@@ -4,7 +4,7 @@ import json
 import os
 import re
 from dataclasses import dataclass
-from typing import List
+from typing import Dict, List, Union
 
 import click
 import requests
@@ -24,7 +24,7 @@ class Board:
     opp: int
     turn: int
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.me = 1 << 28 | 1 << 35
         self.opp = 1 << 27 | 1 << 36
         self.turn = BLACK
@@ -39,7 +39,7 @@ class Board:
             return self.me
         return self.opp
 
-    def get_image_file_name(self):
+    def get_image_file_name(self) -> str:
         return "jpg/{0:0{1}x}{2:0{3}x}.jpg".format(
             self.black(),
             16,
@@ -47,7 +47,7 @@ class Board:
             16,
         )
 
-    def write_image(self):
+    def write_image(self) -> str:
         filename = self.get_image_file_name()
 
         image_size = 100
@@ -109,7 +109,7 @@ class Board:
         field += "12345678"[index // 8]
         return field
 
-    def show(self) -> str:
+    def show(self) -> None:
         moves = self.get_moves()
         print("+-a-b-c-d-e-f-g-h-+")
         for y in range(8):
@@ -243,12 +243,17 @@ class Board:
         raise ValueError("Invalid color {}".format(color))
 
 
-def generate_tree(dot, board, node, move_sequence=""):
+def generate_tree(
+    dot: Digraph,
+    board: Board,
+    node: Union[str, Dict[str, Union[dict, str]]],
+    move_sequence: str = "",
+) -> None:
     board_name = board.get_image_file_name()
     board_name = board.write_image()
     dot.node(board_name, label="", shape="plaintext", image=board_name)
 
-    if type(node) is str:
+    if isinstance(node, str):
 
         if node == "transposition":
             return
@@ -273,12 +278,12 @@ def generate_tree(dot, board, node, move_sequence=""):
 
 
 @click.group()
-def cli():
+def cli() -> None:
     pass
 
 
 @cli.command()
-def update_tree():
+def update_tree() -> None:
     dot = Digraph(format="png")
     board = Board()
 
@@ -294,7 +299,7 @@ PGN_FOLDER = "./pgn"
 
 @cli.command()
 @click.argument("username", type=str)
-def download_playok_games(username):
+def download_playok_games(username: str) -> None:
     response = requests.get(
         f"https://www.playok.com/en/stat.phtml?u={username}&g=rv&sk=2"
     )
@@ -309,7 +314,12 @@ def download_playok_games(username):
         date = tds[0].text.strip().split(" ")[0]
         link = tds[-1].find("a", recursive=True)["href"]
 
-        game_id = re.search("[0-9]+", link).group(0)
+        match = re.search("[0-9]+", link)
+
+        if not match:
+            raise ValueError("regex didn't match")
+
+        game_id = match.group(0)
         filename = os.path.join(PGN_FOLDER, date, game_id + ".pgn")
 
         os.makedirs(os.path.join(PGN_FOLDER, date), exist_ok=True)
