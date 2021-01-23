@@ -1,8 +1,21 @@
+
+let board_children = {};
+
+function update_board(board_id) {
+    $.ajax({
+        url: 'api/board/' + board_id,
+        dataType: 'json'
+    }).done(function (data) {
+        board_children = data.children;
+        $("#board").attr('src', 'svg/board/' + board_id);
+    })
+}
+
 $(document).ready(function (e) {
 
-    $("#board").attr('src', 'svg/board/initial');
+    update_board('initial');
 
-    $('#board').click(function (e) {
+    $('#board').mousedown(function (e) {
         var posX = e.pageX - $(this).offset().left;
         var posY = e.pageY - $(this).offset().top;
 
@@ -10,6 +23,13 @@ $(document).ready(function (e) {
         var field_height = $(this).height() / 8;
 
         var field_id = 8 * Math.floor(posY / field_width) + Math.floor(posX / field_height);
-        console.log(field_id);
+
+        if (field_id in board_children) {
+            update_board(board_children[field_id].id);
+        }
+    });
+
+    $('#new_game').click(function (e) {
+        update_board('initial');
     });
 });

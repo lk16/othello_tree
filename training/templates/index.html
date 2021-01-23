@@ -13,15 +13,15 @@
     <div class="content">
         <div class="form-wrapper">
             <div class="buttons">
-                <select name="black_player">
+                <select name="black_player" disabled="disabled">
                     <option value="human">Human</option>
                     <option value="bot">Bot</option>
                     <option value="analyzer">Analyzer</option>
                 </select>
                 <button id="new_game">New Game</button>
-                <button id="xot_game">Xot Game</button>
-                <button id="undo_move">Undo</button>
-                <select name="white_player">
+                <button id="xot_game" disabled="disabled">Xot Game</button>
+                <button id="undo_move" disabled="disabled">Undo</button>
+                <select name="white_player" disabled="disabled">
                     <option value="human">Human</option>
                     <option value="bot">Bot</option>
                     <option value="analyzer">Analyzer</option>
@@ -29,7 +29,7 @@
             </div>
         </div>
         <div class="board-wrapper">
-            <img id="board" />
+            <img id="board" draggable="false" />
         </div>
     </div>
 </body>

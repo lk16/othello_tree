@@ -25,6 +25,3 @@ Small web training app for openings
         - [ ] redo it
 - [ ] implement frontend
     - [ ] JS mess
-
-http://localhost:5000/svg/board/B00000008100000000000001008000000
-http://localhost:5000/svg/api/B00000008100000000000001008000000

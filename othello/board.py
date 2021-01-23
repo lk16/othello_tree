@@ -180,6 +180,9 @@ class Board:
             print("|")
         print("+-----------------+")
 
+    def has_moves(self) -> bool:
+        return self.get_moves() != 0
+
     def do_move(self, move: int) -> "Board":
         if move == MOVE_PASS:
             child = Board()
