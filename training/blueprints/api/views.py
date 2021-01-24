@@ -27,7 +27,7 @@ def board_details_children(board: Board) -> Dict[str, dict]:
     return children
 
 
-@api.route("/board/<board_id>")
+@api.route("/boards/<board_id>")
 def board_details(board_id: str) -> Response:
     try:
         board = Board.from_id(board_id)

@@ -3,11 +3,11 @@ let board_children = {};
 
 function update_board(board_id) {
     $.ajax({
-        url: 'api/board/' + board_id,
+        url: 'api/boards/' + board_id,
         dataType: 'json'
     }).done(function (data) {
         board_children = data.children;
-        $("#board").attr('src', 'svg/board/' + data.id);
+        $("#board").attr('src', 'svg/boards/' + data.id);
     })
 }
 

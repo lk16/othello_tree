@@ -5,7 +5,7 @@ from othello.board import BLACK, EMPTY, VALID_MOVE, WHITE, Board
 svg = Blueprint("svg", __name__)
 
 
-@svg.route("/board/<board_id>")
+@svg.route("/boards/<board_id>")
 def board_image(board_id: str) -> Response:
     try:
         board = Board.from_id(board_id)
