@@ -7,7 +7,7 @@ function update_board(board_id) {
         dataType: 'json'
     }).done(function (data) {
         board_children = data.children;
-        $("#board").attr('src', 'svg/board/' + board_id);
+        $("#board").attr('src', 'svg/board/' + data.id);
     })
 }
 
@@ -31,5 +31,9 @@ $(document).ready(function (e) {
 
     $('#new_game').click(function (e) {
         update_board('initial');
+    });
+
+    $('#xot_game').click(function (e) {
+        update_board('xot');
     });
 });

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import json
+import random
 from dataclasses import dataclass
 from typing import List
 
@@ -32,7 +34,12 @@ class Board:
             return Board()
 
         if api_str == "xot":
-            raise NotImplementedError
+            xot_list = json.load(open("training/xot.json", "r"))
+            xot = random.choice(xot_list)
+
+            board.me = int(xot["me"][2:], 16)
+            board.opp = int(xot["opp"][2:], 16)
+            return board
 
         if len(api_str) != 33:
             raise ValueError("unexpected length")

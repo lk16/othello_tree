@@ -69,4 +69,10 @@ def board_image(board_id: str) -> Response:
 
     response = make_response(body)
     response.content_type = "image/svg+xml"
+
+    if board_id == "xot":
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+
     return response

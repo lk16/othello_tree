@@ -18,9 +18,8 @@ Small web training app for openings
         - [ ] mistakes param
     - [ ] `GET /api/board/<id>`
         - [x] initial
-        - [ ] xot
+        - [x] xot
         - [x] any id
-    - [ ] `POST /api/move`
     - [ ] `GET /api/openings`
         - [ ] redo it
 - [ ] implement frontend
