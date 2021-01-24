@@ -304,3 +304,20 @@ class Board:
         elif color == BLACK:
             return bin(self.black()).count("1")
         raise ValueError("Invalid color {}".format(color))
+
+    def exact_score(self) -> int:
+        tmp = self
+
+        if self.turn == BLACK:
+            tmp = self.do_move(MOVE_PASS)
+
+        me_count = tmp.count(WHITE)
+        opp_count = tmp.count(BLACK)
+
+        if me_count > opp_count:
+            return 64 - (2 * opp_count)
+
+        if opp_count > me_count:
+            return -64 + (2 * me_count)
+
+        return 0

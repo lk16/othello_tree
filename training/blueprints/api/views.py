@@ -3,8 +3,11 @@ from typing import Dict
 from flask import Blueprint, Response, jsonify, make_response
 
 from othello.board import BLACK, MOVE_PASS, VALID_MOVE, WHITE, Board
+from training.blueprints.api.bot import Bot
 
 api = Blueprint("api", __name__)
+
+API_BOT_DEPTH = 5
 
 
 def board_details_children(board: Board) -> Dict[str, dict]:
@@ -46,6 +49,18 @@ def board_details(board_id: str) -> Response:
             },
             "moves": len(children),
         },
+        "turn": {BLACK: "black", WHITE: "white"}[board.turn],
     }
 
     return jsonify(result)  # type: ignore
+
+
+@api.route("/bot-moves/<board_id>")
+def bot_moves_details(board_id: str) -> Response:
+    try:
+        board = Board.from_id(board_id)
+    except ValueError:
+        return make_response("invalid board id", 400)
+
+    best_child = Bot(API_BOT_DEPTH).do_move(board)
+    return board_details(best_child.to_id())

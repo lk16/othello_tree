@@ -22,5 +22,6 @@ Small web training app for openings
         - [x] any id
     - [ ] `GET /api/openings`
         - [ ] redo it
+    - [ ] check TODOs
 - [ ] implement frontend
     - [ ] JS mess
