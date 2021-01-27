@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import json
 import random
 from dataclasses import dataclass
@@ -27,40 +25,45 @@ class Board:
         self.turn = BLACK
 
     @classmethod
-    def from_id(cls, api_str: str) -> "Board":
+    def from_discs(cls, me: int, opp: int, turn: int) -> "Board":
         board = Board()
+        board.me = me
+        board.opp = opp
+        board.turn = turn
+        return board
 
-        if api_str == "initial":
+    @classmethod
+    def from_xot(cls) -> "Board":
+        xot_list = json.load(open("training/xot.json", "r"))
+        xot = random.choice(xot_list)
+
+        me = int(xot["me"][2:], 16)
+        opp = int(xot["opp"][2:], 16)
+        return Board.from_discs(me, opp, BLACK)
+
+    @classmethod
+    def from_id(cls, id_str: str) -> "Board":
+        if id_str == "initial":
             return Board()
 
-        if api_str == "xot":
-            xot_list = json.load(open("training/xot.json", "r"))
-            xot = random.choice(xot_list)
+        if id_str == "xot":
+            return Board.from_xot()
 
-            board.me = int(xot["me"][2:], 16)
-            board.opp = int(xot["opp"][2:], 16)
-            return board
-
-        if len(api_str) != 33:
-            raise ValueError("unexpected length")
-
-        if api_str[0] not in "BW":
-            raise ValueError("unexpected turn value")
+        if len(id_str) != 33:
+            raise ValueError("unexpected id length")
 
         try:
-            blacks = int(api_str[1:17], 16)
-            whites = int(api_str[17:33], 16)
+            blacks = int(id_str[1:17], 16)
+            whites = int(id_str[17:33], 16)
         except ValueError as e:
             raise ValueError("unexpected base 16 char in discs") from e
 
-        turn = {"B": BLACK, "W": WHITE}[api_str[0]]
+        if id_str[0] == "B":
+            return Board.from_discs(blacks, whites, BLACK)
+        if id_str[0] == "W":
+            return Board.from_discs(whites, blacks, WHITE)
 
-        board.me = blacks
-        board.opp = whites
-
-        if turn == WHITE:
-            board = board.do_move(MOVE_PASS)
-        return board
+        raise ValueError("unexpected turn value")
 
     def black(self) -> int:
         if self.turn == BLACK:

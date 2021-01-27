@@ -27,4 +27,5 @@ repos:
     rev: 'master'
     hooks:
     -   id: mypy
+        exclude: tests/
         args: [--strict, --allow-any-generics, --ignore-missing-imports]
