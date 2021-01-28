@@ -1,9 +1,11 @@
 import json
 import random
 from dataclasses import dataclass
-from typing import List
+from typing import List, Tuple
 
 from PIL import Image, ImageDraw
+
+from othello.bits import bits_rotate
 
 BLACK = 0
 WHITE = 1
@@ -76,39 +78,34 @@ class Board:
         return self.opp
 
     def get_image_file_name(self) -> str:
-        return "jpg/{0:0{1}x}{2:0{3}x}.jpg".format(
+        return "jpg/{:016x}{:016x}.jpg".format(
             self.black(),
-            16,
             self.white(),
-            16,
         )
 
     def get_fields(self) -> List[int]:
         moves = self.get_moves()
         fields: List[int] = []
+        black = self.black()
+        white = self.white()
 
         for index in range(64):
             mask = 1 << index
 
-            if self.black() & mask:
+            if black & mask:
                 fields.append(BLACK)
-                continue
-
-            if self.white() & mask:
+            elif white & mask:
                 fields.append(WHITE)
-                continue
-
-            if moves & mask:
+            elif moves & mask:
                 fields.append(VALID_MOVE)
-                continue
-
-            fields.append(EMPTY)
+            else:
+                fields.append(EMPTY)
 
         return fields
 
     def to_id(self) -> str:
         turn = {BLACK: "B", WHITE: "W"}[self.turn]
-        return turn + "{:016x}{:016x}".format(self.black(), self.white())
+        return f"{turn}{self.black():016x}{self.white():016x}"
 
     def write_image(self) -> str:
         filename = self.get_image_file_name()
@@ -157,7 +154,7 @@ class Board:
             raise ValueError("field too long")
         if field == "--":
             return MOVE_PASS
-        x = ord(field[0]) - ord("a")
+        x = ord(field[0].lower()) - ord("a")
         y = ord(field[1]) - ord("1")
         if x not in range(8) or y not in range(8):
             raise ValueError("invalid field: {}".format(field))
@@ -165,10 +162,11 @@ class Board:
 
     @classmethod
     def index_to_field(cls, index: int) -> str:
+        if index == MOVE_PASS:
+            return "--"
         if index not in range(64):
             raise ValueError("field index out of bounds")
-        field = ""
-        field += "abcdefgh"[index % 8]
+        field = "abcdefgh"[index % 8]
         field += "12345678"[index // 8]
         return field
 
@@ -307,3 +305,37 @@ class Board:
         elif color == BLACK:
             return bin(self.black()).count("1")
         raise ValueError("Invalid color {}".format(color))
+
+    def normalized(self) -> Tuple["Board", int]:
+
+        normalized = Board.from_discs(self.me, self.opp, self.turn)
+        rotation = 0
+
+        for r in range(1, 8):
+            me = bits_rotate(self.me, r)
+            opp = bits_rotate(self.opp, r)
+
+            if me < normalized.me or (me == normalized.me and opp < normalized.opp):
+                normalized.me = me
+                normalized.opp = opp
+                rotation = r
+
+        return normalized, rotation
+
+    def denormalized(self, rotation: int) -> "Board":
+        unrotation = {
+            0: 0,
+            1: 1,
+            2: 2,
+            3: 3,
+            4: 4,
+            5: 6,
+            6: 5,
+            7: 7,
+        }[rotation]
+
+        return Board.from_discs(
+            bits_rotate(self.me, unrotation),
+            bits_rotate(self.opp, unrotation),
+            self.turn,
+        )
