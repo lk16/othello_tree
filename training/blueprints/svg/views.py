@@ -1,7 +1,8 @@
+from typing import Set
+
 from flask import Blueprint, Response, make_response, request
 
 from othello.board import BLACK, EMPTY, VALID_MOVE, WHITE, Board
-from typing import Set
 
 svg = Blueprint("svg", __name__)
 

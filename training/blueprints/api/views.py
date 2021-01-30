@@ -76,7 +76,7 @@ def get_openings_recursive(
     raise TypeError(f"unexpected type {type(tree)}")
 
 
-def read_white_openings() -> List[dict]:
+def read_white_openings() -> List[List[dict]]:
     tree = json.load(open("white.json", "r"))
 
     openings_list: List[List[str]] = []
@@ -87,25 +87,27 @@ def read_white_openings() -> List[dict]:
     for opening in openings_list:
         moves: List[int] = [Board.field_to_index(field) for field in opening]
 
-        # validate moves
-        board = Board()
-        for move in moves:
-            board = board.do_move(move)
-
         if len(moves) % 2 != 0:
             moves = moves[:-1]
 
-        opening_moves: List[dict] = []
+        opening_steps: List[dict] = []
 
+        board = Board()
         for i in range(len(moves) // 2):
-            opening_moves.append({"move": moves[i * 2], "best_child": moves[i * 2 + 1]})
+            move = moves[i * 2]
+            best_child = moves[i * 2 + 1]
 
-        response.append(
-            {
-                "start": Board().to_id(),
-                "moves": opening_moves,
-            }
-        )
+            assert BLACK == board.turn
+            board = board.do_move(move)
+
+            opening_steps.append(
+                {"board": board.to_id(), "best_child": moves[i * 2 + 1]}
+            )
+
+            assert WHITE == board.turn
+            board = board.do_move(best_child)
+
+        response.append(opening_steps)
 
     return response
 
