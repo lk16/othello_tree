@@ -6,6 +6,8 @@ let training = {
     opening_id: 0,
     step_id: 0,
     mistakes: {},
+    flawless: true,
+    total_openings: 0,
 };
 
 function shuffle_array(array) {
@@ -25,8 +27,18 @@ function update_board(board_id, mistakes = '') {
     });
 }
 
+function update_training_stats() {
+    let done = training.total_openings - training.openings.length;
+    let total = training.total_openings;
+    let ratio = Math.floor(100 * done / total);
+
+    let text = "Training: " + done + " / " + total + " = " + ratio + "%";
+    $('.training-stats-wrapper').text(text);
+}
+
 $(document).ready(function (e) {
 
+    $('.training-stats-wrapper').hide();
     update_board('initial');
 
     $('#board').mousedown(function (e) {
@@ -43,27 +55,51 @@ $(document).ready(function (e) {
                 update_board(board.children[field_id].id);
             }
             if (mode == "training") {
+                if (training.openings.length == 0) {
+                    return;
+                }
+
                 best_field_id = training.openings[training.opening_id][training.step_id].best_child;
                 if (field_id == best_field_id) {
-                    console.log(training.openings[training.opening_id].length);
+
                     if (training.step_id < training.openings[training.opening_id].length - 1) {
+                        // more steps remain in this opening
                         training.step_id += 1;
-                    } else if (training.opening_id < training.openings.length) {
-                        training.opening_id += 1;
+                    }
+
+                    else {
+                        // this opening is over, next one
+
+                        if (training.flawless) {
+                            // no mistakes, remove opening from openings list
+                            training.openings.splice(training.opening_id, 1);
+
+                            // wrap around if this was the last opening
+                            training.opening_id = training.opening_id % training.openings.length;
+
+                            update_training_stats();
+                        }
+                        else {
+                            // mistakes were made, don't remove, wrap around if necessary
+                            training.opening_id = (training.opening_id + 1) % training.openings.length;
+                        }
                         training.step_id = 0;
-                    } else {
-                        // we've gone through all openings
+                    }
+
+                    if (training.openings.length == 0) {
                         return;
                     }
 
                     update_board(training.openings[training.opening_id][training.step_id].board);
                     training.mistakes = {};
+                    training.flawless = true;
 
                 } else {
                     if (field_id in training.mistakes) {
                         return;
                     }
                     training.mistakes[field_id] = true;
+                    training.flawless = false;
                     mistakes = Object.keys(training.mistakes).join(',');
                     update_board(board.id, mistakes);
                 }
@@ -73,10 +109,14 @@ $(document).ready(function (e) {
 
     $('#new_game').click(function (e) {
         update_board('initial');
+        $('.training-stats-wrapper').hide();
+        mode = "game";
     });
 
     $('#xot_game').click(function (e) {
         update_board('xot');
+        $('.training-stats-wrapper').hide();
+        mode = "game";
     });
 
     $('#training').click(function (e) {
@@ -89,7 +129,11 @@ $(document).ready(function (e) {
             mode = "training";
             training.opening_id = 0;
             training.move_id = 0;
+            training.flawless = true;
+            training.total_openings = data.length;
+            update_training_stats();
             update_board(data[0][0].board);
         });
+        $('.training-stats-wrapper').show();
     });
 });

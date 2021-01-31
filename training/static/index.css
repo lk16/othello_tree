@@ -29,6 +29,14 @@
     height: 100%;
 }
 
+.training-stats-wrapper {
+    color: white;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: larger;
+    font-weight: bold;
+    margin: 5px;
+}
+
 body {
     background-color: #333333;
 }
