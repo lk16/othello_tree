@@ -3,7 +3,7 @@ from typing import Any, Dict, List
 
 from flask import Blueprint, Response, jsonify, make_response
 
-from othello.board import BLACK, MOVE_PASS, VALID_MOVE, WHITE, Board
+from othello.board import BLACK, MOVE_PASS, VALID_MOVE, WHITE, Board, opponent
 
 api = Blueprint("api", __name__)
 
@@ -62,6 +62,9 @@ def get_openings_recursive(
         try:
             Board.field_to_index(tree)
         except ValueError:
+            if tree == "transposition":
+                return
+
             openings.append(prefix)
             return
 
@@ -76,8 +79,9 @@ def get_openings_recursive(
     raise TypeError(f"unexpected type {type(tree)}")
 
 
-def read_white_openings() -> List[List[dict]]:
-    tree = json.load(open("white.json", "r"))
+def read_openings(color: int) -> list:
+    filename = {WHITE: "white", BLACK: "black"}[color] + ".json"
+    tree = json.load(open(filename, "r"))
 
     openings_list: List[List[str]] = []
     get_openings_recursive(tree, openings_list, [])
@@ -87,24 +91,26 @@ def read_white_openings() -> List[List[dict]]:
     for opening in openings_list:
         moves: List[int] = [Board.field_to_index(field) for field in opening]
 
-        if len(moves) % 2 != 0:
-            moves = moves[:-1]
-
         opening_steps: List[dict] = []
 
         board = Board()
+
+        if color == BLACK:
+            board = board.do_move(moves[0])
+            moves = moves[1:]
+
         for i in range(len(moves) // 2):
             move = moves[i * 2]
             best_child = moves[i * 2 + 1]
 
-            assert BLACK == board.turn
+            assert opponent(color) == board.turn
             board = board.do_move(move)
 
             opening_steps.append(
                 {"board": board.to_id(), "best_child": moves[i * 2 + 1]}
             )
 
-            assert WHITE == board.turn
+            assert color == board.turn
             board = board.do_move(best_child)
 
         response.append(opening_steps)
@@ -112,12 +118,7 @@ def read_white_openings() -> List[List[dict]]:
     return response
 
 
-def read_black_openings() -> list:
-    # TODO
-    return []
-
-
 @api.route("/openings")
 def openings_list() -> Response:
-    openings = read_white_openings() + read_black_openings()
+    openings = read_openings(WHITE) + read_openings(BLACK)
     return jsonify(openings)  # type: ignore

@@ -339,3 +339,7 @@ class Board:
             bits_rotate(self.opp, unrotation),
             self.turn,
         )
+
+
+def opponent(color: int) -> int:
+    return {WHITE: BLACK, BLACK: WHITE}[color]

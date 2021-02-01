@@ -65,6 +65,15 @@ def update_tree() -> None:
     generate_tree(dot, board, tree_root)
     dot.render("white", cleanup=True)
 
+    dot = Digraph(format="png")
+    board = Board()
+
+    with open("black.json", "r") as json_file:
+        tree_root = json.load(json_file)
+
+    generate_tree(dot, board, tree_root)
+    dot.render("black", cleanup=True)
+
 
 @cli.command()
 @click.argument("username", type=str)
