@@ -23,6 +23,16 @@ def board_image(board_id: str) -> Response:
     body = f"""<?xml version="1.0"?>
     <svg width="{image_size}" height="{image_size}" xmlns="http://www.w3.org/2000/svg"
     xmlns:xlink="http://www.w3.org/1999/xlink">
+    <defs>
+        <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color: rgb(120,120,120);stop-opacity:1" />
+            <stop offset="100%" style="stop-color: black;stop-opacity:1" />
+        </linearGradient>
+        <linearGradient id="grad2" x1="15%" y1="15%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color: white;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:rgb(150,150,150);stop-opacity:1" />
+        </linearGradient>
+    </defs>
     <rect x="0" y="0" width="{image_size}" height="{image_size}"
     style="fill:green; stroke-width:2; stroke:black" />
     """
@@ -78,10 +88,22 @@ def board_image(board_id: str) -> Response:
         if field == EMPTY:
             continue
 
-        fill_color = {BLACK: "black", WHITE: "white"}[field]
+        if field == BLACK:
+            body += f"""
+            <circle cx="{circle_x}" cy="{circle_y}" r="{disc_radius}"
+            fill="url(#grad1)" />
+            <circle cx="{circle_x}" cy="{circle_y}" r="{disc_radius}" stroke="#222222"
+            stroke-width="8" fill="none" />
+            """
+            continue
 
-        body += f"""<circle cx="{circle_x}" cy="{circle_y}"
-        r="{disc_radius}" fill="{fill_color}" />\n"""
+        if field == WHITE:
+            body += f"""
+            <circle cx="{circle_x}" cy="{circle_y}" r="{disc_radius}"
+            fill="url(#grad2)" />
+            <circle cx="{circle_x}" cy="{circle_y}" r="{disc_radius}" stroke="#DDDDDD"
+            stroke-width="8" fill="none" />
+            """
 
     body += "</svg>"
 
