@@ -84,6 +84,7 @@ $(document).ready(function (e) {
                             training.opening_id = (training.opening_id + 1) % training.openings.length;
                         }
                         training.step_id = 0;
+                        training.flawless = true;
                     }
 
                     if (training.openings.length == 0) {
@@ -92,7 +93,6 @@ $(document).ready(function (e) {
 
                     update_board(training.openings[training.opening_id][training.step_id].board);
                     training.mistakes = {};
-                    training.flawless = true;
 
                 } else {
                     if (field_id in training.mistakes) {
