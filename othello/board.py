@@ -1,7 +1,7 @@
 import json
 import random
 from dataclasses import dataclass
-from typing import List, Tuple
+from typing import List, Set, Tuple
 
 from PIL import Image, ImageDraw
 
@@ -339,6 +339,9 @@ class Board:
             bits_rotate(self.opp, unrotation),
             self.turn,
         )
+
+    def get_normalized_children(self) -> Set["Board"]:
+        return set(child.normalized()[0] for child in self.get_children())
 
 
 def opponent(color: int) -> int:

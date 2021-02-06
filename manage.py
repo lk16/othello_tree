@@ -10,7 +10,8 @@ import requests
 from bs4 import BeautifulSoup
 from graphviz import Digraph
 
-from othello.board import Board
+from othello.board import BLACK, WHITE, Board
+from othello.openings_tree import OpeningsTree
 
 PGN_FOLDER: str = "./pgn"
 
@@ -121,6 +122,24 @@ def training() -> None:
     from training.app import app
 
     app.run(host="0.0.0.0", port=5000, debug=True)
+
+
+@cli.command()
+@click.argument("color", type=str)
+@click.argument("opening", type=str)
+def add_opening(color: str, opening: str) -> None:
+
+    color_str = {"white": WHITE, "black": BLACK}[color]
+
+    filename = "./openings.json"
+
+    try:
+        tree = OpeningsTree.from_file(filename)
+    except FileNotFoundError:
+        tree = OpeningsTree()
+
+    tree.add_opening(color_str, opening.split(" "))
+    tree.save(filename)
 
 
 if __name__ == "__main__":
