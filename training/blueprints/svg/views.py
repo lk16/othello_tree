@@ -45,7 +45,6 @@ def board_image(board_id: str) -> Response:
         style="stroke:black; stroke-width:2" />\n"""
 
     mistakes = request.args.get("mistakes", "")
-    print(mistakes)
 
     mistake_indexes: Set[int] = set()
 
