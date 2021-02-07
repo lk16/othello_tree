@@ -1,7 +1,7 @@
 import json
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Set
 
-from othello.board import MOVE_PASS, Board
+from othello.board import BLACK, MOVE_PASS, WHITE, Board
 
 
 class OpeningsTreeValidationError(Exception):
@@ -17,15 +17,17 @@ class OpeningsTree:
         openings_tree = OpeningsTree()
         read_data = json.load(open(filename, "r"))
         openings_tree.data.update(read_data)
-        openings_tree._validate()
         return openings_tree
 
     def save(self, filename: str) -> None:
-        self._validate()
+        try:
+            self.validate()
+        except OpeningsTreeValidationError as e:
+            print(f"VALIDATION FAILED: {e}")
         json.dump(self.data, open(filename, "w"), indent=4)
 
-    def _validate(self) -> None:
-        for color in ["white", "black"]:
+    def validate(self) -> None:
+        for color in [WHITE, BLACK]:
             self._validate_tree(color)
         self._validate_items()
         self._validate_no_unreachable()
@@ -39,26 +41,50 @@ class OpeningsTree:
                     f"board_id {board_id}: invalid board_id"
                 )
 
-            # TODO add Board.is_normalized()
-            _, rotation = board.normalized()
-            if rotation != 0:
+            if not board.is_normalized():
                 raise OpeningsTreeValidationError(
                     f"board_id {board_id}: un-normalized board_id"
                 )
 
             if "best_child" in info:
-                move = info["best_child"]
+                best_child = info["best_child"]
 
-                _ = move
-                # TODO check that best_child is a normalized child of board
+                if best_child not in board.get_normalized_children():
+                    raise OpeningsTreeValidationError(
+                        f"board_id {board_id}: invalid best_child {best_child}"
+                    )
 
-    def _validate_tree(self, color: str) -> None:
-        # TODO
-        pass
+    def _validate_tree(self, color: int) -> None:
+        board_id = Board().normalized()[0].to_id()
+        self._validate_subtree(color, board_id)
 
-    def _validate_subtree(self, color: str) -> None:
-        # TODO
-        pass
+    def _validate_subtree(self, color: int, board_id: str) -> None:
+        board = Board.from_id(board_id)
+
+        if board.turn == color:
+            if board_id not in self.data["openings"]:
+                raise OpeningsTreeValidationError(f"board_id {board_id}: missing")
+
+            if "best_child" not in self.data["openings"][board_id]:
+                raise OpeningsTreeValidationError(
+                    f"board_id {board_id}: best_child value not found"
+                )
+
+            best_child_id = self.data["openings"][board_id]["best_child"]
+            return self._validate_subtree(color, best_child_id)
+
+        child_ids: Set[str] = board.get_normalized_children_ids()
+
+        missing_child_ids: Set[str] = child_ids - set(self.data["openings"].keys())
+
+        if len(missing_child_ids) not in [0, len(child_ids)]:
+            raise OpeningsTreeValidationError(
+                f"board_id {board_id}: missing children:\n"
+                + "\n".join(sorted(missing_child_ids))
+            )
+
+        for child_id in child_ids:
+            self._validate_subtree(color, child_id)
 
     def _validate_no_unreachable(self) -> None:
         # TODO
@@ -103,13 +129,6 @@ class OpeningsTree:
         board_id = Board().normalized()[0].to_id()
         return self.data["openings"][board_id]  # type: ignore
 
-    def children(self, board_id: str) -> List[Any]:
+    def children(self, board_id: str) -> Set[str]:
         board = Board.from_id(board_id)
-
-        children = []
-        for child in board.get_normalized_children():
-            child_id = child.to_id()
-            if child_id in self.data["openings"]:
-                children.append(child_id)
-
-        return children
+        return set(self.data["openings"].keys()) & board.get_normalized_children_ids()

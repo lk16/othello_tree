@@ -26,6 +26,9 @@ class Board:
         self.opp = 1 << 27 | 1 << 36
         self.turn = BLACK
 
+    def __hash__(self) -> int:
+        return hash((self.me, self.opp, self.turn))
+
     @classmethod
     def from_discs(cls, me: int, opp: int, turn: int) -> "Board":
         board = Board()
@@ -342,6 +345,12 @@ class Board:
 
     def get_normalized_children(self) -> Set["Board"]:
         return set(child.normalized()[0] for child in self.get_children())
+
+    def get_normalized_children_ids(self) -> Set[str]:
+        return set(child.to_id() for child in self.get_normalized_children())
+
+    def is_normalized(self) -> bool:
+        return self.normalized()[1] == 0
 
 
 def opponent(color: int) -> int:

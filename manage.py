@@ -142,5 +142,12 @@ def add_opening(color: str, opening: str) -> None:
     tree.save(filename)
 
 
+@cli.command()
+@click.argument("board_id", type=str)
+def show(board_id: str) -> None:
+    board = Board.from_id(board_id)
+    board.show()
+
+
 if __name__ == "__main__":
     cli()
