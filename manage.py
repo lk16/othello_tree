@@ -11,7 +11,7 @@ from bs4 import BeautifulSoup
 from graphviz import Digraph
 
 from othello.board import BLACK, WHITE, Board
-from othello.openings_tree import OpeningsTree
+from othello.openings_tree import OpeningsTree, OpeningsTreeValidationError
 
 PGN_FOLDER: str = "./pgn"
 
@@ -56,7 +56,7 @@ def cli() -> None:
 
 
 @cli.command()
-def update_tree() -> None:
+def update_tree_images() -> None:
     dot = Digraph(format="png")
     board = Board()
 
@@ -118,16 +118,21 @@ def download_playok_games(username: str) -> None:
 
 
 @cli.command()
-def training() -> None:
+def runserver() -> None:
     from training.app import app
 
     app.run(host="0.0.0.0", port=5000, debug=True)
 
 
-@cli.command()
+@cli.group()
+def openings() -> None:
+    pass
+
+
+@openings.command()
 @click.argument("color", type=str)
 @click.argument("opening", type=str)
-def add_opening(color: str, opening: str) -> None:
+def add(color: str, opening: str) -> None:
 
     color_str = {"white": WHITE, "black": BLACK}[color]
 
@@ -142,11 +147,23 @@ def add_opening(color: str, opening: str) -> None:
     tree.save(filename)
 
 
-@cli.command()
+@openings.command()
 @click.argument("board_id", type=str)
 def show(board_id: str) -> None:
     board = Board.from_id(board_id)
     board.show()
+
+
+@openings.command()
+def validate() -> None:
+    filename = "./openings.json"
+    tree = OpeningsTree.from_file(filename)
+
+    try:
+        tree.validate()
+    except OpeningsTreeValidationError as e:
+        print(e)
+        exit(1)
 
 
 if __name__ == "__main__":
