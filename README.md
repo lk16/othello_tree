@@ -1,10 +1,6 @@
 # Othello tree
 
-Generates optimal opening tree
-
-Small web training app for openings
-
-
+Small web app for training othello openings
 
 ---
 
@@ -17,6 +13,12 @@ Small web training app for openings
     - [ ] `OpeningsTree.validate()`:
         - [ ] tests
     - [ ] `OpeningsTree.get_openings(color)`
+
+
+##### TODO Check PGN
+- [ ] load PGN files
+- [ ] compare PGN with openingstree
+- [ ] update openingstree
 
 
 ##### TODO playok websocket client
