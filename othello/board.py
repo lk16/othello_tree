@@ -110,6 +110,9 @@ class Board:
         turn = {BLACK: "B", WHITE: "W"}[self.turn]
         return f"{turn}{self.black():016x}{self.white():016x}"
 
+    def get_normalized_id(self) -> str:
+        return self.normalized()[0].to_id()
+
     def write_image(self) -> str:
         filename = self.get_image_file_name()
 
