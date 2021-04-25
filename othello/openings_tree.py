@@ -71,8 +71,10 @@ class OpeningsTree:
         return set(self.data["openings"].keys()) & board.get_normalized_children_ids()
 
     def check(self, game: Game, player_name: str) -> None:
+
         if game.is_xot():
-            raise ValueError("we don't check xot games")
+            print("we don't check xot games")
+            return
 
         player_color = game.get_color(player_name)
 
@@ -90,7 +92,7 @@ class OpeningsTree:
             best_child = self.lookup(board)
 
             if not best_child:
-                print(f"move {move_offset+1}: board not found in openings tree")
+                print(f"move {move_offset+1}: not found")
                 best_child = self.add_board_interactive(board, game, move_offset)
 
             child_normalized = child.normalized()[0]

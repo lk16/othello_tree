@@ -136,6 +136,7 @@ def check_pgn(
 
     openings_filename = "openings.json"
     openings_tree = OpeningsTree.from_file(openings_filename)
+    print(f"checking file {filename}")
     openings_tree.check(game, player_name)
     openings_tree.save(openings_filename)
 
