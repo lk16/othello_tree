@@ -12,6 +12,7 @@ class OpeningsTreeValidationError(Exception):
 class OpeningsTree:
     def __init__(self) -> None:
         self.data: Dict[str, Dict[str, Any]] = {"openings": {}}
+        self.filename: Optional[str] = None
 
     @classmethod
     def from_file(cls, filename: str) -> "OpeningsTree":
@@ -56,8 +57,10 @@ class OpeningsTree:
 
         return Board.from_id(openings[board_id]["best_child"])
 
-    def add_opening_move(self, board_id: str, child_id: str) -> None:
-        self.data["openings"][board_id] = {"best_child": child_id}
+    def upsert(self, board: Board, best_child: Board) -> None:
+        board_id = board.get_normalized_id()
+        best_child_id = best_child.get_normalized_id()
+        self.data["openings"][board_id] = {"best_child": best_child_id}
 
     def root(self) -> dict:
         board_id = Board().get_normalized_id()
@@ -88,12 +91,12 @@ class OpeningsTree:
 
             if not best_child:
                 print(f"move {index+1}: board not found in openings tree")
-                return
+                best_child = self.add_board_interactive(board)
 
             child_normalized, rotation = child.normalized()
 
             if child_normalized != best_child:
-                print(f"move {index+1}: incorrect move")
+                print(f"move {index+1}: wrong")
                 print()
 
                 print("Board:")
@@ -105,7 +108,27 @@ class OpeningsTree:
                 print()
 
                 print("Correct move:")
-                best_child.denormalized(rotation).show()
+                board.denormalize_child(best_child).show()
                 return
 
             print(f"move {index+1}: correct")
+
+    def add_board_interactive(self, board: Board) -> Board:
+        board.show()
+
+        # TODO print moves to reach this board
+
+        move_fields = board.get_move_fields()
+
+        print("Enter correct move:")
+        while True:
+            field = input("> ")
+
+            if field in move_fields:
+                break
+
+        best_move = Board.field_to_index(field)
+        best_child = board.do_move(best_move).normalized()[0]
+        board_normalized = board.normalized()[0]
+        self.upsert(board_normalized, best_child)
+        return best_child

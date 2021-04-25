@@ -126,12 +126,18 @@ def runserver() -> None:
 
 
 @cli.command()
-@click.argument("filename", type=str)
 @click.argument("player_name", type=str)
-def check_pgn(filename: str, player_name: str) -> None:
+@click.argument("filename", type=str)
+def check_pgn(
+    player_name: str,
+    filename: str,
+) -> None:
     game = Game.from_pgn(filename)
-    openings_tree = OpeningsTree.from_file("openings.json")
+
+    openings_filename = "openings.json"
+    openings_tree = OpeningsTree.from_file(openings_filename)
     openings_tree.check(game, player_name)
+    openings_tree.save(openings_filename)
 
 
 @cli.group()

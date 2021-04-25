@@ -297,6 +297,16 @@ class Board:
 
         return movesSet & ~(self.me | self.opp) & 0xFFFFFFFFFFFFFFFF
 
+    def get_move_fields(self) -> Set[str]:
+        moves = self.get_moves()
+
+        move_fields: Set[str] = set()
+        for i in range(64):
+            if (moves >> i) & 1 == 1:
+                move_fields.add(Board.index_to_field(i))
+
+        return move_fields
+
     def get_children(self) -> List["Board"]:
         children = []
         moves = self.get_moves()
@@ -311,6 +321,11 @@ class Board:
         elif color == BLACK:
             return bin(self.black()).count("1")
         raise ValueError("Invalid color {}".format(color))
+
+    def rotated(self, rotation: int) -> "Board":
+        me = bits_rotate(self.me, rotation)
+        opp = bits_rotate(self.opp, rotation)
+        return Board.from_discs(me, opp, self.turn)
 
     def normalized(self) -> Tuple["Board", int]:
 
@@ -340,11 +355,15 @@ class Board:
             7: 7,
         }[rotation]
 
-        return Board.from_discs(
-            bits_rotate(self.me, unrotation),
-            bits_rotate(self.opp, unrotation),
-            self.turn,
-        )
+        return self.rotated(unrotation)
+
+    def denormalize_child(self, child: "Board") -> "Board":
+        children = set(self.get_children())
+        for i in range(8):
+            rotated = child.rotated(i)
+            if rotated in children:
+                return rotated
+        raise ValueError("Invalid child")
 
     def get_normalized_children(self) -> Set["Board"]:
         return set(child.normalized()[0] for child in self.get_children())
