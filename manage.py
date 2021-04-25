@@ -11,6 +11,8 @@ from bs4 import BeautifulSoup
 from graphviz import Digraph
 
 from othello.board import Board
+from othello.game import Game
+from othello.openings_tree import OpeningsTree
 
 PGN_FOLDER: str = "./pgn"
 
@@ -125,16 +127,11 @@ def runserver() -> None:
 
 @cli.command()
 @click.argument("filename", type=str)
-def load_pgn(filename: str) -> None:
-    from othello.game import Game
-
+@click.argument("player_name", type=str)
+def check_pgn(filename: str, player_name: str) -> None:
     game = Game.from_pgn(filename)
-    for board in game.boards:
-        board.show()
-        print()
-
-    for key, value in game.metadata.items():
-        print(f"{key} -> {value}")
+    openings_tree = OpeningsTree.from_file("openings.json")
+    openings_tree.check(game, player_name)
 
 
 @cli.group()

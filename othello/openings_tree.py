@@ -1,7 +1,8 @@
 import json
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, Optional, Set
 
-from othello.board import MOVE_PASS, Board
+from othello.board import Board, opponent
+from othello.game import Game
 
 
 class OpeningsTreeValidationError(Exception):
@@ -46,28 +47,14 @@ class OpeningsTree:
                     f"board {board_id}: best_child is not a valid child"
                 )
 
-    def add_opening(self, color: int, fields: List[str]) -> None:
-        board = Board()
+    def lookup(self, board: Board) -> Optional[Board]:
+        board_id = board.get_normalized_id()
+        openings = self.data["openings"]
 
-        for field in fields:
-            index = Board.field_to_index(field)
+        if board_id not in openings:
+            return None
 
-            if index == MOVE_PASS:
-                raise ValueError("passing is not allowed in openings")
-
-            board_id = board.get_normalized_id()
-
-            try:
-                child = board.do_move(index)
-            except ValueError:
-                raise ValueError(f"invalid move {field}")
-
-            child_id = child.get_normalized_id()
-
-            # only save boards for "color" in openings file
-            if board.turn == color:
-                self.add_opening_move(board_id, child_id)
-            board = child
+        return Board.from_id(openings[board_id]["best_child"])
 
     def add_opening_move(self, board_id: str, child_id: str) -> None:
         self.data["openings"][board_id] = {"best_child": child_id}
@@ -79,3 +66,46 @@ class OpeningsTree:
     def children(self, board_id: str) -> Set[str]:
         board = Board.from_id(board_id)
         return set(self.data["openings"].keys()) & board.get_normalized_children_ids()
+
+    def check(self, game: Game, player_name: str) -> None:
+        if game.is_xot():
+            raise ValueError("we don't check xot games")
+
+        player_color = game.get_color(player_name)
+
+        for index in range(len(game.boards) - 1):
+            board = game.boards[index]
+            child = game.boards[index + 1]
+
+            if board.turn != player_color:
+                continue
+
+            if child.turn != opponent(player_color):
+                print(f"move {index+1}: we don't check beyond passed turns")
+                return
+
+            best_child = self.lookup(board)
+
+            if not best_child:
+                print(f"move {index+1}: board not found in openings tree")
+                return
+
+            child_normalized, rotation = child.normalized()
+
+            if child_normalized != best_child:
+                print(f"move {index+1}: incorrect move")
+                print()
+
+                print("Board:")
+                board.show()
+                print()
+
+                print("Played move:")
+                child.show()
+                print()
+
+                print("Correct move:")
+                best_child.denormalized(rotation).show()
+                return
+
+            print(f"move {index+1}: correct")

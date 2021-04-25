@@ -1,7 +1,7 @@
 from copy import copy
 from typing import Dict, List
 
-from othello.board import Board
+from othello.board import BLACK, WHITE, Board
 
 
 class Game:
@@ -43,6 +43,12 @@ class Game:
 
         return game
 
-    def normalize(self) -> None:
-        for index, board in enumerate(self.boards):
-            self.boards[index] = board.normalized()[0]
+    def get_color(self, player_name: str) -> int:
+        if self.metadata["Black"] == player_name:
+            return BLACK
+        if self.metadata["White"] == player_name:
+            return WHITE
+        raise ValueError(f"Player {player_name} is not playing this game")
+
+    def is_xot(self) -> bool:
+        return self.metadata.get("Variant", "") == "xot"
