@@ -76,27 +76,27 @@ class OpeningsTree:
 
         player_color = game.get_color(player_name)
 
-        for index in range(len(game.boards) - 1):
-            board = game.boards[index]
-            child = game.boards[index + 1]
+        for move_offset in range(len(game.boards) - 1):
+            board = game.boards[move_offset]
+            child = game.boards[move_offset + 1]
 
             if board.turn != player_color:
                 continue
 
             if child.turn != opponent(player_color):
-                print(f"move {index+1}: we don't check beyond passed turns")
+                print(f"move {move_offset+1}: we don't check beyond passed turns")
                 return
 
             best_child = self.lookup(board)
 
             if not best_child:
-                print(f"move {index+1}: board not found in openings tree")
-                best_child = self.add_board_interactive(board)
+                print(f"move {move_offset+1}: board not found in openings tree")
+                best_child = self.add_board_interactive(board, game, move_offset)
 
-            child_normalized, rotation = child.normalized()
+            child_normalized = child.normalized()[0]
 
             if child_normalized != best_child:
-                print(f"move {index+1}: wrong")
+                print(f"move {move_offset+1}: wrong")
                 print()
 
                 print("Board:")
@@ -111,12 +111,16 @@ class OpeningsTree:
                 board.denormalize_child(best_child).show()
                 return
 
-            print(f"move {index+1}: correct")
+            print(f"move {move_offset+1}: correct")
 
-    def add_board_interactive(self, board: Board) -> Board:
+    def add_board_interactive(
+        self, board: Board, game: Game, move_offset: int
+    ) -> Board:
         board.show()
+        print()
 
-        # TODO print moves to reach this board
+        move_sequence = " ".join(game.moves[:move_offset])
+        print(f"Replay: {move_sequence}")
 
         move_fields = board.get_move_fields()
 

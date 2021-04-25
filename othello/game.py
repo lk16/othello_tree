@@ -6,8 +6,9 @@ from othello.board import BLACK, WHITE, Board
 
 class Game:
     def __init__(self) -> None:
-        self.boards: List[Board] = []
         self.metadata: Dict[str, str] = {}
+        self.boards: List[Board] = []
+        self.moves: List[str] = []
 
     @classmethod
     def from_pgn(cls, filename: str) -> "Game":
@@ -38,6 +39,7 @@ class Game:
                 if word[0].isdigit():
                     continue
 
+                game.moves.append(word)
                 board = board.do_move(board.field_to_index(word))
                 game.boards.append(copy(board))
 
