@@ -1,7 +1,7 @@
 import json
-from typing import Any, Dict, Optional, Set
+from typing import Any, Dict, Iterator, List, Optional, Set, Tuple
 
-from othello.board import Board, opponent
+from othello.board import BLACK, WHITE, Board, opponent
 from othello.game import Game
 
 
@@ -61,14 +61,6 @@ class OpeningsTree:
         board_id = board.get_normalized_id()
         best_child_id = best_child.get_normalized_id()
         self.data["openings"][board_id] = {"best_child": best_child_id}
-
-    def root(self) -> dict:
-        board_id = Board().get_normalized_id()
-        return self.data["openings"][board_id]  # type: ignore
-
-    def children(self, board_id: str) -> Set[str]:
-        board = Board.from_id(board_id)
-        return set(self.data["openings"].keys()) & board.get_normalized_children_ids()
 
     def check(self, game: Game, player_name: str) -> None:
 
@@ -138,3 +130,44 @@ class OpeningsTree:
         board_normalized = board.normalized()[0]
         self.upsert(board_normalized, best_child)
         return best_child
+
+    def get_openings(self, color: int) -> List[List[Tuple[Board, int]]]:
+
+        start_positions: Dict[int, List[Board]] = {
+            BLACK: [Board()],
+            WHITE: Board().get_children(),
+        }
+
+        openings = []
+
+        for position in start_positions[color]:
+            openings += self._get_openings(color, position, [])
+
+        return openings
+
+    def _get_openings(
+        self, color: int, board: Board, prefix: List[Tuple[Board, int]]
+    ) -> List[List[Tuple[Board, int]]]:
+
+        assert board.turn == color
+
+        try:
+            best_child_id: str = self.data["openings"][board.get_normalized_id()][
+                "best_child"
+            ]
+        except KeyError:
+            return [prefix]
+
+        best_child = board.denormalize_child(Board.from_id(best_child_id))
+        assert best_child in board.get_children()
+        assert best_child.turn == opponent(color)
+        best_move = board.get_move(best_child)
+
+        openings = []
+
+        for grand_child in best_child.get_children():
+            openings += self._get_openings(
+                color, grand_child, prefix + [(board, best_move)]
+            )
+
+        return openings

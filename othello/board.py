@@ -374,6 +374,13 @@ class Board:
     def is_normalized(self) -> bool:
         return self.normalized()[1] == 0
 
+    def get_move(self, child: "Board") -> int:
+        moves = self.get_moves()
+        for move in range(64):
+            if moves & (1 << move) and self.do_move(move) == child:
+                return move
+        raise ValueError("Not a child of board")
+
 
 def opponent(color: int) -> int:
     return {WHITE: BLACK, BLACK: WHITE}[color]
