@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import glob
 import json
 import os
 import re
@@ -127,18 +128,26 @@ def runserver() -> None:
 
 @cli.command()
 @click.argument("player_name", type=str)
-@click.argument("filename", type=str)
+@click.argument("path", type=str)
 def check_pgn(
     player_name: str,
-    filename: str,
+    path: str,
 ) -> None:
-    game = Game.from_pgn(filename)
+
+    if os.path.isdir(path):
+        filenames = sorted(list(glob.glob(path + "/**/*.pgn")), reverse=True)
+    else:
+        filenames = [path]
 
     openings_filename = "openings.json"
     openings_tree = OpeningsTree.from_file(openings_filename)
-    print(f"checking file {filename}")
-    openings_tree.check(game, player_name)
-    openings_tree.save(openings_filename)
+
+    for i, filename in enumerate(filenames):
+        print(f"checking file {i+1}/{len(filenames)}: {filename}")
+        game = Game.from_pgn(filename)
+
+        openings_tree.check(game, player_name)
+        openings_tree.save(openings_filename)
 
 
 @cli.group()
